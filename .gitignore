@@ -8,3 +8,4 @@ chatgpt-creator
 results.txt
 blacklist.json
 results.txt
+*.go.bak

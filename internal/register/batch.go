@@ -3,10 +3,10 @@ package register
 import (
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
-	"strings"
 
 	"github.com/verssache/chatgpt-creator/internal/email"
 	"github.com/verssache/chatgpt-creator/internal/util"
@@ -43,7 +43,7 @@ func registerOne(workerID int, tag string, proxy, outputFile, defaultPassword, d
 	fileMu.Lock()
 	defer fileMu.Unlock()
 
-	f, err := os.OpenFile(outputFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(outputFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		return false, emailAddr, fmt.Sprintf("failed to open output file: %v", err)
 	}
@@ -95,10 +95,8 @@ func RunBatch(totalAccounts int, outputFile string, maxWorkers int, proxy, defau
 					printMu.Unlock()
 				} else {
 					atomic.AddInt64(&failureCount, 1)
-					// Failed — return the slot so it gets retried
-					atomic.AddInt64(&remaining, 1)
+					// Do not retry failed registration attempts.
 					ts := time.Now().Format("15:04:05")
-
 					if strings.Contains(errStr, "unsupported_email") {
 						parts := strings.Split(emailAddr, "@")
 						if len(parts) == 2 {
